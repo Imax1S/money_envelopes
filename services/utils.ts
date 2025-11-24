@@ -1,12 +1,18 @@
 import { Envelope, GameDifficulty } from '../types';
 
-export const formatCurrency = (amount: number, currency: string = '₽'): string => {
-  return new Intl.NumberFormat('ru-RU', {
-    style: 'currency',
-    currency: 'RUB',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(amount).replace('RUB', currency);
+export const formatCurrency = (amount: number, currencyCode: string = 'RUB'): string => {
+  // Map common codes to symbols if needed, or rely on Intl
+  try {
+    return new Intl.NumberFormat('ru-RU', {
+      style: 'currency',
+      currency: currencyCode,
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(amount);
+  } catch (e) {
+    // Fallback for custom symbols or invalid codes
+    return `${amount} ${currencyCode}`;
+  }
 };
 
 export const generateEnvelopes = (
@@ -43,7 +49,6 @@ export const generateEnvelopes = (
   let diff = total - currentSum;
 
   // OPTIMIZATION: If difference is large, distribute in chunks first
-  // This prevents millions of iterations in the while loop below
   if (Math.abs(diff) > days * 2) {
     const chunk = Math.floor(diff / days);
     if (chunk !== 0) {

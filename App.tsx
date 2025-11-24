@@ -9,6 +9,7 @@ const STORAGE_KEY = 'money_envelopes_state';
 
 const App: React.FC = () => {
   const [gameState, setGameState] = useState<SavingsState | null>(null);
+  const [isLoaded, setIsLoaded] = useState(false);
 
   // Load from local storage on mount
   useEffect(() => {
@@ -20,20 +21,24 @@ const App: React.FC = () => {
         if (!parsed.unlockedAchievements) {
           parsed.unlockedAchievements = [];
         }
+        if (!parsed.currency) {
+          parsed.currency = 'RUB';
+        }
         setGameState(parsed);
       } catch (e) {
         console.error("Failed to parse saved state", e);
         localStorage.removeItem(STORAGE_KEY);
       }
     }
+    setIsLoaded(true);
   }, []);
 
   // Save to local storage on change
   useEffect(() => {
-    if (gameState) {
+    if (isLoaded && gameState) {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(gameState));
     }
-  }, [gameState]);
+  }, [gameState, isLoaded]);
 
   const handleStart = (amount: number, days: number, difficulty: GameDifficulty) => {
     const envelopes = generateEnvelopes(amount, days, difficulty);
@@ -72,11 +77,6 @@ const App: React.FC = () => {
     const newAchievements = checkNewAchievements(interimState, openedEnvelope);
     const finalUnlocked = [ ...interimState.unlockedAchievements, ...newAchievements ];
 
-    // If new achievements, we could trigger a toast here in the future
-    if (newAchievements.length > 0) {
-      // console.log("New Achievements Unlocked:", newAchievements);
-    }
-
     setGameState({ 
       ...interimState, 
       unlockedAchievements: finalUnlocked
@@ -84,11 +84,17 @@ const App: React.FC = () => {
   };
 
   const handleReset = () => {
-    if (confirm('Вы уверены, что хотите сбросить прогресс? Все данные будут удалены.')) {
-      setGameState(null);
-      localStorage.removeItem(STORAGE_KEY);
-    }
+    // Explicitly remove storage and set state to null to trigger re-render of SetupScreen
+    localStorage.removeItem(STORAGE_KEY);
+    setGameState(null);
   };
+
+  const handleUpdateCurrency = (currency: string) => {
+    if (!gameState) return;
+    setGameState({ ...gameState, currency });
+  };
+
+  if (!isLoaded) return null;
 
   if (!gameState || !gameState.isSetup) {
     return <SetupScreen onStart={handleStart} />;
@@ -99,6 +105,7 @@ const App: React.FC = () => {
       state={gameState} 
       onOpenEnvelope={handleOpenEnvelope} 
       onReset={handleReset}
+      onUpdateCurrency={handleUpdateCurrency}
     />
   );
 };

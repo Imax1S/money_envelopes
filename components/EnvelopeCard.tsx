@@ -5,21 +5,22 @@ import { formatCurrency } from '../services/utils';
 interface EnvelopeCardProps {
   envelope: Envelope;
   onClick: (id: number) => void;
+  currency?: string;
 }
 
-export const EnvelopeCard: React.FC<EnvelopeCardProps> = ({ envelope, onClick }) => {
+export const EnvelopeCard: React.FC<EnvelopeCardProps> = ({ envelope, onClick, currency = 'RUB' }) => {
   const { id, amount, isOpen } = envelope;
 
   if (isOpen) {
     return (
-      <div className="relative aspect-[4/3] rounded-xl border-2 border-emerald-100 bg-emerald-50 p-4 flex flex-col items-center justify-center text-emerald-800 transition-all">
+      <div className="relative aspect-[4/3] rounded-xl border-2 border-emerald-100 bg-emerald-50 p-4 flex flex-col items-center justify-center text-emerald-800 transition-all shadow-sm animate-pop-in">
         <div className="absolute top-2 right-2">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5 text-emerald-500">
             <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clipRule="evenodd" />
           </svg>
         </div>
         <span className="text-sm font-semibold text-emerald-600 mb-1">День {id}</span>
-        <span className="text-xl font-bold">{formatCurrency(amount)}</span>
+        <span className="text-xl font-bold">{formatCurrency(amount, currency)}</span>
       </div>
     );
   }

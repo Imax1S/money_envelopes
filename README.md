@@ -1,5 +1,7 @@
 # MoneyEnvelopes ✉️💰
 
+https://imax1s.github.io/money_envelopes/
+
 Turn saving money into an engaging daily ritual.
 
 MoneyEnvelopes is a gamified savings tracker based on the digital envelope method. Set a financial goal, choose a timeline, and open a unique virtual envelope every day to reach your target effortlessly.

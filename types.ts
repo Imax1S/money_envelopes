@@ -1,3 +1,5 @@
+import React from 'react';
+
 export interface Envelope {
   id: number;
   amount: number;
@@ -25,7 +27,9 @@ export interface SavingsState {
 }
 
 export enum GameDifficulty {
-  EASY = 'easy',     // Less variance
-  MEDIUM = 'medium', // Normal variance
-  HARD = 'hard'      // High variance
+  EQUAL = 'equal',             // Equal amounts
+  PROGRESSION = 'progression', // Arithmetic progression (1, 2, 3...)
+  RANDOM = 'random'            // Moderate random variance
 }
+
+export type Language = 'en' | 'ru';

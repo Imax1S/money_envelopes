@@ -1,16 +1,29 @@
 import React, { useState } from 'react';
-import { GameDifficulty } from '../types';
+import { GameDifficulty, Language } from '../types';
 import { Button } from './Button';
+import { translations } from '../services/translations';
 
 interface SetupScreenProps {
-  onStart: (amount: number, days: number, difficulty: GameDifficulty) => void;
+  onStart: (amount: number, days: number, difficulty: GameDifficulty, currency: string) => void;
+  lang: Language;
 }
 
-export const SetupScreen: React.FC<SetupScreenProps> = ({ onStart }) => {
+export const SetupScreen: React.FC<SetupScreenProps> = ({ onStart, lang }) => {
+  const t = translations[lang];
   const [amount, setAmount] = useState<string>('');
   const [days, setDays] = useState<number>(30);
-  const [difficulty, setDifficulty] = useState<GameDifficulty>(GameDifficulty.MEDIUM);
+  const [difficulty, setDifficulty] = useState<GameDifficulty>(GameDifficulty.RANDOM);
+  const [currency, setCurrency] = useState<string>('USD'); // Default to USD per prompt requirement for English
   const [error, setError] = useState<string>('');
+
+  const currencies = [
+    { code: 'USD', symbol: '$' },
+    { code: 'EUR', symbol: '€' },
+    { code: 'RUB', symbol: '₽' },
+    { code: 'KZT', symbol: '₸' },
+    { code: 'BYN', symbol: 'Br' },
+    { code: 'UAH', symbol: '₴' },
+  ];
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -19,16 +32,16 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({ onStart }) => {
     const parsedAmount = parseInt(amount.replace(/\D/g, ''), 10);
     
     if (isNaN(parsedAmount) || parsedAmount <= 0) {
-      setError('Пожалуйста, введите корректную сумму.');
+      setError(t.howMuchError);
       return;
     }
 
     if (parsedAmount < days) {
-      setError(`Сумма накопления должна быть не меньше ${days} ₽ (минимум 1 ₽ в день).`);
+      setError(t.minAmountError(days));
       return;
     }
 
-    onStart(parsedAmount, days, difficulty);
+    onStart(parsedAmount, days, difficulty, currency);
   };
 
   return (
@@ -40,8 +53,8 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({ onStart }) => {
               <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 18.75a60.07 60.07 0 0115.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 013 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 00-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 01-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 003 15h-.75M15 10.5a3 3 0 11-6 0 3 3 0 016 0zm3 0h.008v.008H18V10.5zm-12 0h.008v.008H6V10.5z" />
             </svg>
           </div>
-          <h1 className="text-3xl font-bold text-slate-900 mb-2">Создать цель</h1>
-          <p className="text-slate-500">Задайте параметры, и мы создадим для вас персональный план накоплений.</p>
+          <h1 className="text-3xl font-bold text-slate-900 mb-2">{t.createGoal}</h1>
+          <p className="text-slate-500">{t.createGoalDesc}</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -56,14 +69,36 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({ onStart }) => {
 
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">
-              Сколько хотите накопить? (₽)
+              {t.currency}
+            </label>
+            <div className="grid grid-cols-6 gap-2">
+              {currencies.map((curr) => (
+                <button
+                  key={curr.code}
+                  type="button"
+                  onClick={() => setCurrency(curr.code)}
+                  className={`p-2 rounded-lg text-sm font-bold border transition-all ${
+                    currency === curr.code
+                      ? 'border-indigo-500 bg-indigo-50 text-indigo-700 ring-1 ring-indigo-500'
+                      : 'border-slate-200 text-slate-600 hover:bg-slate-50'
+                  }`}
+                >
+                  {curr.symbol}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">
+              {t.howMuch}
             </label>
             <input
               type="number"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
-              placeholder="50000"
-              className="w-full px-4 py-3 rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors text-lg"
+              placeholder={t.howMuchPlaceholder}
+              className="w-full px-4 py-3 rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors text-lg [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
               required
               min="100"
             />
@@ -71,7 +106,7 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({ onStart }) => {
 
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">
-              Срок челленджа (дней)
+              {t.duration}
             </label>
             <div className="flex items-center gap-4">
               <input
@@ -87,40 +122,41 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({ onStart }) => {
               </div>
             </div>
             <div className="flex justify-between text-xs text-slate-400 mt-1">
-              <span>1 неделя</span>
-              <span>1 год</span>
+              <span>{t.week}</span>
+              <span>{t.year}</span>
             </div>
           </div>
 
           <div>
              <label className="block text-sm font-medium text-slate-700 mb-2">
-              Режим сложности (Разброс сумм)
+              {t.distribution}
             </label>
             <div className="grid grid-cols-3 gap-2">
               {[
-                { id: GameDifficulty.EASY, label: 'Ровно', desc: 'Меньше разброс' },
-                { id: GameDifficulty.MEDIUM, label: 'Баланс', desc: 'Оптимально' },
-                { id: GameDifficulty.HARD, label: 'Хаос', desc: 'Большой разброс' }
+                { id: GameDifficulty.EQUAL, label: t.modeEqual, desc: t.modeEqualDesc, icon: '⚖️' },
+                { id: GameDifficulty.PROGRESSION, label: t.modeProgression, desc: t.modeProgressionDesc, icon: '📈' },
+                { id: GameDifficulty.RANDOM, label: t.modeRandom, desc: t.modeRandomDesc, icon: '🎲' }
               ].map((diff) => (
                 <button
                   key={diff.id}
                   type="button"
                   onClick={() => setDifficulty(diff.id)}
-                  className={`p-2 rounded-lg text-center border transition-all ${
+                  className={`p-2 rounded-lg text-center border transition-all flex flex-col items-center justify-center gap-1 h-24 ${
                     difficulty === diff.id 
-                      ? 'border-indigo-500 bg-indigo-50 text-indigo-700' 
-                      : 'border-slate-200 hover:border-slate-300 text-slate-600'
+                      ? 'border-indigo-500 bg-indigo-50 text-indigo-700 ring-1 ring-indigo-500' 
+                      : 'border-slate-200 hover:border-slate-300 text-slate-600 hover:bg-slate-50'
                   }`}
                 >
-                  <div className="font-medium text-sm">{diff.label}</div>
-                  <div className="text-[10px] opacity-75">{diff.desc}</div>
+                  <span className="text-xl">{diff.icon}</span>
+                  <div className="font-medium text-sm leading-tight">{diff.label}</div>
+                  <div className="text-[10px] opacity-75 leading-tight">{diff.desc}</div>
                 </button>
               ))}
             </div>
           </div>
 
           <Button type="submit" fullWidth size="lg">
-            Начать челлендж
+            {t.startChallenge}
           </Button>
         </form>
       </div>

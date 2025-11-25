@@ -1,7 +1,6 @@
 import { Envelope, GameDifficulty } from '../types';
 
 export const formatCurrency = (amount: number, currencyCode: string = 'RUB'): string => {
-  // Map common codes to symbols if needed, or rely on Intl
   try {
     return new Intl.NumberFormat('ru-RU', {
       style: 'currency',
@@ -10,7 +9,6 @@ export const formatCurrency = (amount: number, currencyCode: string = 'RUB'): st
       maximumFractionDigits: 0,
     }).format(amount);
   } catch (e) {
-    // Fallback for custom symbols or invalid codes
     return `${amount} ${currencyCode}`;
   }
 };
@@ -18,92 +16,119 @@ export const formatCurrency = (amount: number, currencyCode: string = 'RUB'): st
 export const generateEnvelopes = (
   total: number, 
   days: number, 
-  difficulty: GameDifficulty
+  mode: GameDifficulty
 ): Envelope[] => {
-  // Validation to prevent impossible distribution (minimum 1 unit per day)
+  // Validation
   if (total < days) total = days;
 
-  const baseAvg = total / days;
-  let variance = 0.3; // Default 30%
-
-  if (difficulty === GameDifficulty.EASY) variance = 0.1;
-  if (difficulty === GameDifficulty.HARD) variance = 0.6;
-
   let envelopes: number[] = new Array(days).fill(0);
-  let currentSum = 0;
 
-  // Generate initial random amounts
-  for (let i = 0; i < days; i++) {
-    const min = Math.max(1, baseAvg * (1 - variance));
-    const max = Math.max(1, baseAvg * (1 + variance));
-    
-    // Generate random amount within range
-    let amount = Math.floor(Math.random() * (max - min + 1)) + min;
-    amount = Math.max(1, Math.floor(amount)); 
-    
-    envelopes[i] = amount;
-    currentSum += amount;
-  }
-
-  // Adjust to match exact total
-  let diff = total - currentSum;
-
-  // OPTIMIZATION: If difference is large, distribute in chunks first
-  if (Math.abs(diff) > days * 2) {
-    const chunk = Math.floor(diff / days);
-    if (chunk !== 0) {
+  switch (mode) {
+    case GameDifficulty.EQUAL: {
+      const baseAmount = Math.floor(total / days);
+      let remainder = total % days;
+      
       for (let i = 0; i < days; i++) {
-        // Prevent going below 1
-        if (diff < 0 && envelopes[i] + chunk < 1) continue;
-
-        envelopes[i] += chunk;
-        currentSum += chunk;
+        envelopes[i] = baseAmount + (remainder > 0 ? 1 : 0);
+        remainder--;
       }
-      // Recalculate diff after bulk adjustment
-      diff = total - currentSum;
+      break;
     }
-  }
 
-  // Fine-tuning the remainder one by one
-  // Added safety counter to prevent browser freeze
-  let safetyCounter = 0;
-  const MAX_ITERATIONS = 200000; 
+    case GameDifficulty.PROGRESSION: {
+      // Logic: Create a base arithmetic sequence 0, 1, 2 ... (days-1)
+      // Calculate sum of that sequence.
+      // Distribute the difference between Target and SequenceSum evenly.
+      
+      // Sum of 0..N-1 is (N * (N-1)) / 2
+      const sequenceSum = (days * (days - 1)) / 2;
+      const difference = total - sequenceSum;
+      
+      const baseOffset = Math.floor(difference / days);
+      let remainder = difference % days;
 
-  while (diff !== 0 && safetyCounter < MAX_ITERATIONS) {
-    const index = Math.floor(Math.random() * days);
-    if (diff > 0) {
-      envelopes[index]++;
-      diff--;
-    } else {
-      if (envelopes[index] > 1) {
-        envelopes[index]--;
-        diff++;
-      }
-    }
-    safetyCounter++;
-  }
-
-  // Emergency fallback if loop exited due to safety counter (very rare)
-  if (diff !== 0) {
-      // Forcefully distribute remainder to the first capable envelopes
+      // Check if baseOffset is negative (shouldn't happen due to total >= days check, 
+      // but strictly speaking progression 1..N requires Total >= N*(N+1)/2)
+      // If total is small, we just flatten it via max(1, ...)
+      
       for (let i = 0; i < days; i++) {
-          if (diff === 0) break;
-          
-          if (diff > 0) {
-              envelopes[i] += diff;
-              diff = 0;
-          } else if (diff < 0) {
-              const available = envelopes[i] - 1;
-              if (available > 0) {
-                  const take = Math.min(available, Math.abs(diff));
-                  envelopes[i] -= take;
-                  diff += take;
-              }
+        // The sequence item is i (0-indexed)
+        // Add the base offset distributed from the difference
+        // Add 1 if there is remainder left
+        let amount = i + baseOffset + (remainder > 0 ? 1 : 0);
+        if (amount < 1) amount = 1; // Safety floor
+        envelopes[i] = amount;
+        remainder--;
+      }
+      
+      // Re-sum and fix any tiny discrepancy due to floor limits (rare edge case)
+      const currentSum = envelopes.reduce((a, b) => a + b, 0);
+      let diff = total - currentSum;
+      let idx = 0;
+      while (diff !== 0) {
+        if (diff > 0) { envelopes[idx]++; diff--; }
+        else { if (envelopes[idx] > 1) { envelopes[idx]--; diff++; } }
+        idx = (idx + 1) % days;
+      }
+      break;
+    }
+
+    case GameDifficulty.RANDOM:
+    default: {
+      // Moderate Random (formerly Medium/Balanced)
+      const baseAvg = total / days;
+      const variance = 0.4; // 40% variance for "Moderate" random
+
+      let currentSum = 0;
+      for (let i = 0; i < days; i++) {
+        const min = Math.max(1, baseAvg * (1 - variance));
+        const max = Math.max(1, baseAvg * (1 + variance));
+        
+        let amount = Math.floor(Math.random() * (max - min + 1)) + min;
+        amount = Math.max(1, amount);
+        
+        envelopes[i] = amount;
+        currentSum += amount;
+      }
+
+      // Distribute difference
+      let diff = total - currentSum;
+      
+      // Bulk fix
+      if (Math.abs(diff) > days) {
+        const chunk = Math.floor(diff / days);
+        if (chunk !== 0) {
+          for (let i = 0; i < days; i++) {
+             if (diff < 0 && envelopes[i] + chunk < 1) continue;
+             envelopes[i] += chunk;
+             currentSum += chunk;
           }
+          diff = total - currentSum;
+        }
       }
+
+      // Fine tune
+      let safety = 0;
+      while (diff !== 0 && safety < 100000) {
+        const index = Math.floor(Math.random() * days);
+        if (diff > 0) {
+          envelopes[index]++;
+          diff--;
+        } else {
+          if (envelopes[index] > 1) {
+            envelopes[index]--;
+            diff++;
+          }
+        }
+        safety++;
+      }
+      break;
+    }
   }
 
-  // Shuffle array using Fisher-Yates
+  // Shuffle the envelopes for the user (Fisher-Yates)
+  // Even for progression, we shuffle so the "daily pick" is a surprise game.
+  // If user wants ordered progression, they can just pick sequentially, but the IDs are shuffled.
   for (let i = envelopes.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [envelopes[i], envelopes[j]] = [envelopes[j], envelopes[i]];

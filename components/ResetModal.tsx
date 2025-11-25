@@ -1,13 +1,18 @@
 import React from 'react';
 import { Button } from './Button';
+import { Language } from '../types';
+import { translations } from '../services/translations';
 
 interface ResetModalProps {
   isOpen: boolean;
   onClose: () => void;
   onConfirm: () => void;
+  lang: Language;
 }
 
-export const ResetModal: React.FC<ResetModalProps> = ({ isOpen, onClose, onConfirm }) => {
+export const ResetModal: React.FC<ResetModalProps> = ({ isOpen, onClose, onConfirm, lang }) => {
+  const t = translations[lang];
+  
   if (!isOpen) return null;
 
   return (
@@ -19,17 +24,17 @@ export const ResetModal: React.FC<ResetModalProps> = ({ isOpen, onClose, onConfi
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
             </svg>
           </div>
-          <h3 className="text-lg font-bold text-slate-900 mb-2">Сбросить прогресс?</h3>
+          <h3 className="text-lg font-bold text-slate-900 mb-2">{t.resetTitle}</h3>
           <p className="text-slate-500 text-sm mb-6">
-            Вы потеряете всю историю накоплений и достижения. Это действие нельзя отменить.
+            {t.resetDesc}
           </p>
           
           <div className="flex gap-3">
             <Button onClick={onClose} variant="outline" fullWidth>
-              Отмена
+              {t.cancel}
             </Button>
             <Button onClick={onConfirm} variant="danger" fullWidth>
-              Сбросить
+              {t.confirmReset}
             </Button>
           </div>
         </div>

@@ -1,29 +1,52 @@
 import React, { useState } from 'react';
-import { Envelope, SavingsState } from '../types';
+import { Envelope, SavingsState, Language } from '../types';
 import { formatCurrency, calculateProgress } from '../services/utils';
 import { EnvelopeCard } from './EnvelopeCard';
 import { AchievementsPanel } from './AchievementsPanel';
 import { SettingsModal } from './SettingsModal';
 import { ResetModal } from './ResetModal';
+import { translations } from '../services/translations';
 
 interface DashboardProps {
   state: SavingsState;
   onOpenEnvelope: (id: number) => void;
   onReset: () => void;
   onUpdateCurrency: (currency: string) => void;
+  lang: Language;
+  onLanguageChange: (lang: Language) => void;
 }
 
-export const Dashboard: React.FC<DashboardProps> = ({ state, onOpenEnvelope, onReset, onUpdateCurrency }) => {
+export const Dashboard: React.FC<DashboardProps> = ({ 
+  state, 
+  onOpenEnvelope, 
+  onReset, 
+  onUpdateCurrency,
+  lang,
+  onLanguageChange
+}) => {
+  const t = translations[lang];
   const { percentage, saved, total, daysCompleted, daysTotal } = calculateProgress(state.envelopes);
   const [filter, setFilter] = useState<'all' | 'opened' | 'closed'>('all');
+  const [sortMethod, setSortMethod] = useState<'default' | 'amount_asc'>('default'); // Sorting state
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isResetModalOpen, setIsResetModalOpen] = useState(false);
 
-  const filteredEnvelopes = state.envelopes.filter(env => {
+  // Filter first
+  let displayEnvelopes = state.envelopes.filter(env => {
     if (filter === 'opened') return env.isOpen;
     if (filter === 'closed') return !env.isOpen;
     return true;
   });
+
+  // Then Sort
+  if (sortMethod === 'amount_asc') {
+    // Clone to sort safely
+    displayEnvelopes = [...displayEnvelopes].sort((a, b) => a.amount - b.amount);
+  } else {
+    // Default is usually ID order (1..N) based on Day, but let's ensure it's ID sorted for "Default"
+    // Note: The envelope ID corresponds to Day #.
+    displayEnvelopes = [...displayEnvelopes].sort((a, b) => a.id - b.id);
+  }
 
   const currency = state.currency || 'RUB';
 
@@ -39,12 +62,15 @@ export const Dashboard: React.FC<DashboardProps> = ({ state, onOpenEnvelope, onR
         onClose={() => setIsSettingsOpen(false)}
         currency={currency}
         onCurrencyChange={onUpdateCurrency}
+        lang={lang}
+        onLanguageChange={onLanguageChange}
       />
       
       <ResetModal 
         isOpen={isResetModalOpen}
         onClose={() => setIsResetModalOpen(false)}
         onConfirm={handleConfirmReset}
+        lang={lang}
       />
 
       {/* Header */}
@@ -62,7 +88,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ state, onOpenEnvelope, onR
              <button 
                onClick={() => setIsSettingsOpen(true)}
                className="text-slate-500 hover:text-indigo-600 transition-colors p-2 rounded-full hover:bg-slate-100"
-               title="Настройки"
+               title={t.settings}
              >
                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
                  <path strokeLinecap="round" strokeLinejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 010 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 010-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.281z" />
@@ -70,7 +96,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ state, onOpenEnvelope, onR
                </svg>
              </button>
              <button onClick={() => setIsResetModalOpen(true)} className="text-sm text-slate-500 hover:text-red-600 font-medium transition-colors">
-               Сбросить
+               {t.reset}
              </button>
           </div>
         </div>
@@ -83,7 +109,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ state, onOpenEnvelope, onR
           {/* Progress Card - Enhanced - Full Width */}
           <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 flex flex-col md:flex-row justify-between items-center relative overflow-hidden gap-6">
             <div className="w-full md:w-2/3 z-10">
-              <p className="text-slate-500 text-sm font-medium mb-1">Прогресс цели</p>
+              <p className="text-slate-500 text-sm font-medium mb-1">{t.goalProgress}</p>
               <div className="flex items-baseline gap-2 mb-6">
                 <h2 className="text-5xl font-bold text-indigo-900">
                   {formatCurrency(saved, currency)}
@@ -103,15 +129,15 @@ export const Dashboard: React.FC<DashboardProps> = ({ state, onOpenEnvelope, onR
                 
                 <div className="grid grid-cols-3 gap-4 text-sm">
                   <div className="bg-slate-50 p-3 rounded-lg">
-                    <span className="block text-slate-400 text-xs mb-1">Осталось собрать</span>
+                    <span className="block text-slate-400 text-xs mb-1">{t.remaining}</span>
                     <span className="font-semibold text-slate-700 block">{formatCurrency(total - saved, currency)}</span>
                   </div>
                   <div className="bg-slate-50 p-3 rounded-lg">
-                    <span className="block text-slate-400 text-xs mb-1">Конвертов открыто</span>
+                    <span className="block text-slate-400 text-xs mb-1">{t.envelopesOpened}</span>
                     <span className="font-semibold text-slate-700 block">{daysCompleted} <span className="text-slate-400 font-normal">/ {daysTotal}</span></span>
                   </div>
                   <div className="bg-slate-50 p-3 rounded-lg">
-                    <span className="block text-slate-400 text-xs mb-1">Прогресс</span>
+                    <span className="block text-slate-400 text-xs mb-1">{t.progress}</span>
                     <span className="font-semibold text-indigo-600 block">{percentage.toFixed(1)}%</span>
                   </div>
                 </div>
@@ -130,48 +156,69 @@ export const Dashboard: React.FC<DashboardProps> = ({ state, onOpenEnvelope, onR
         </div>
 
         {/* Achievements Section */}
-        <AchievementsPanel unlockedIds={state.unlockedAchievements || []} />
+        <AchievementsPanel unlockedIds={state.unlockedAchievements || []} lang={lang} />
 
         {/* Filters & Grid */}
         <div>
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-xl font-bold text-slate-900">Ваши конверты</h3>
-            <div className="flex bg-slate-100 p-1 rounded-lg">
-              <button 
-                onClick={() => setFilter('all')}
-                className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all ${filter === 'all' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
-              >
-                Все
-              </button>
-              <button 
-                onClick={() => setFilter('closed')}
-                className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all ${filter === 'closed' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
-              >
-                Закрытые
-              </button>
-               <button 
-                onClick={() => setFilter('opened')}
-                className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all ${filter === 'opened' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
-              >
-                Открытые
-              </button>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+            <h3 className="text-xl font-bold text-slate-900">{t.yourEnvelopes}</h3>
+            
+            <div className="flex gap-2">
+              <div className="flex bg-slate-100 p-1 rounded-lg">
+                <button 
+                  onClick={() => setSortMethod('default')}
+                  className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all ${sortMethod === 'default' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                  title="Default Day Order"
+                >
+                  #
+                </button>
+                <button 
+                  onClick={() => setSortMethod('amount_asc')}
+                  className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all ${sortMethod === 'amount_asc' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                  title={t.sortByAmount}
+                >
+                  $$$
+                </button>
+              </div>
+
+              <div className="flex bg-slate-100 p-1 rounded-lg">
+                <button 
+                  onClick={() => setFilter('all')}
+                  className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all ${filter === 'all' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                >
+                  {t.filterAll}
+                </button>
+                <button 
+                  onClick={() => setFilter('closed')}
+                  className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all ${filter === 'closed' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                >
+                  {t.filterClosed}
+                </button>
+                 <button 
+                  onClick={() => setFilter('opened')}
+                  className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all ${filter === 'opened' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                >
+                  {t.filterOpened}
+                </button>
+              </div>
             </div>
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-            {filteredEnvelopes.map((envelope) => (
+            {displayEnvelopes.map((envelope) => (
               <EnvelopeCard 
                 key={envelope.id} 
                 envelope={envelope} 
                 onClick={onOpenEnvelope} 
                 currency={currency}
+                lang={lang}
               />
             ))}
           </div>
 
-          {filteredEnvelopes.length === 0 && (
+          {displayEnvelopes.length === 0 && (
              <div className="text-center py-12 text-slate-400">
-               В этой категории пока нет конвертов.
+               {t.emptyCategory}
              </div>
           )}
         </div>

@@ -14,6 +14,7 @@ interface DashboardProps {
   onUpdateCurrency: (currency: string) => void;
   lang: Language;
   onLanguageChange: (lang: Language) => void;
+  syncStatus?: 'saved' | 'saving' | 'error';
 }
 
 export const Dashboard: React.FC<DashboardProps> = ({ 
@@ -22,7 +23,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
   onReset, 
   onUpdateCurrency,
   lang,
-  onLanguageChange
+  onLanguageChange,
+  syncStatus = 'saved'
 }) => {
   const t = translations[lang];
   const { percentage, saved, total, daysCompleted, daysTotal } = calculateProgress(state.envelopes);
@@ -57,8 +59,31 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
   return (
     <div className="min-h-screen pb-12">
+      {/* Sync Status Indicator */}
+      {syncStatus !== 'saved' && (
+        <div className={`fixed top-20 right-4 md:top-4 md:right-4 text-xs px-3 py-1.5 rounded-full shadow-lg z-50 font-medium transition-all duration-300 flex items-center gap-2
+          ${syncStatus === 'saving' ? 'bg-blue-50 text-blue-600 border border-blue-100' : ''}
+          ${syncStatus === 'error' ? 'bg-red-50 text-red-600 border border-red-100' : ''}
+        `}>
+          {syncStatus === 'saving' && (
+            <>
+              <span className="animate-spin h-3 w-3 border-2 border-blue-600 border-t-transparent rounded-full"></span>
+              Saving...
+            </>
+          )}
+          {syncStatus === 'error' && (
+             <>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3 h-3">
+                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-5a.75.75 0 01.75.75v4.5a.75.75 0 01-1.5 0v-4.5A.75.75 0 0110 5zm0 10a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
+              </svg>
+              Offline / Sync Error
+             </>
+          )}
+        </div>
+      )}
+
       <SettingsModal 
-        isOpen={isSettingsOpen} 
+        isOpen={isSettingsOpen}  
         onClose={() => setIsSettingsOpen(false)}
         currency={currency}
         onCurrencyChange={onUpdateCurrency}

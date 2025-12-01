@@ -152,3 +152,11 @@ export const calculateProgress = (envelopes: Envelope[]) => {
 
   return { total, saved, daysTotal, daysCompleted, percentage: total === 0 ? 0 : (saved / total) * 100 };
 };
+
+export function debounce<T extends (...args: any[]) => any>(func: T, wait: number): (...args: Parameters<T>) => void {
+  let timeout: ReturnType<typeof setTimeout>;
+  return (...args: Parameters<T>) => {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => func(...args), wait);
+  };
+}

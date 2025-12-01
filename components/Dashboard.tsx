@@ -29,36 +29,61 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const t = translations[lang];
   const { percentage, saved, total, daysCompleted, daysTotal } = calculateProgress(state.envelopes);
   const [filter, setFilter] = useState<'all' | 'opened' | 'closed'>('all');
-  const [sortMethod, setSortMethod] = useState<'default' | 'amount_asc'>('default'); // Sorting state
+  const [sortMethod, setSortMethod] = useState<'default' | 'amount_asc'>('default');
+  const [orderedIds, setOrderedIds] = useState<number[]>([]);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isResetModalOpen, setIsResetModalOpen] = useState(false);
 
-  // Filter first
-  let displayEnvelopes = state.envelopes.filter(env => {
+  // Initialize or update orderedIds when envelopes change significantly (setup/reset)
+  React.useEffect(() => {
+    // Only reset order if length changes or IDs don't match (e.g. new game)
+    // We check if current orderedIds contains IDs that are no longer valid or if length mismatch
+    const currentIds = new Set(state.envelopes.map(e => e.id));
+    const isMismatch = orderedIds.length !== state.envelopes.length || 
+                      orderedIds.some(id => !currentIds.has(id));
+    
+    if (isMismatch || orderedIds.length === 0) {
+      setOrderedIds(state.envelopes.map(e => e.id));
+    }
+  }, [state.envelopes.length, state.isSetup]); // Depend on length and setup state
+
+  // Handle Sort Actions
+  const handleSort = (method: 'default' | 'amount_asc') => {
+    setSortMethod(method);
+    let sorted = [...state.envelopes];
+    
+    if (method === 'amount_asc') {
+      sorted.sort((a, b) => a.amount - b.amount);
+    } else {
+      // Sort by Day Number (Opened first), then by ID for closed ones
+      sorted.sort((a, b) => {
+        if (a.isOpen && b.isOpen) {
+            return (a.dayNumber || 0) - (b.dayNumber || 0);
+        }
+        if (a.isOpen && !b.isOpen) return -1;
+        if (!a.isOpen && b.isOpen) return 1;
+        return a.id - b.id;
+      });
+    }
+    
+    setOrderedIds(sorted.map(e => e.id));
+  };
+
+  // Prepare display envelopes based on orderedIds
+  const envelopeMap = React.useMemo(() => {
+    return new Map(state.envelopes.map(e => [e.id, e]));
+  }, [state.envelopes]);
+
+  let displayEnvelopes = orderedIds
+    .map(id => envelopeMap.get(id))
+    .filter((env): env is Envelope => env !== undefined);
+
+  // Apply Filter
+  displayEnvelopes = displayEnvelopes.filter(env => {
     if (filter === 'opened') return env.isOpen;
     if (filter === 'closed') return !env.isOpen;
     return true;
   });
-
-  // Then Sort
-  if (sortMethod === 'amount_asc') {
-    // Clone to sort safely
-    displayEnvelopes = [...displayEnvelopes].sort((a, b) => a.amount - b.amount);
-  } else {
-    // Sort by Day Number (Opened first), then by ID for closed ones
-    displayEnvelopes = [...displayEnvelopes].sort((a, b) => {
-        // If both opened, sort by dayNumber
-        if (a.isOpen && b.isOpen) {
-            return (a.dayNumber || 0) - (b.dayNumber || 0);
-        }
-        // Opened comes first
-        if (a.isOpen && !b.isOpen) return -1;
-        if (!a.isOpen && b.isOpen) return 1;
-
-        // If both closed, sort by ID to keep stable order
-        return a.id - b.id;
-    });
-  }
 
   const currency = state.currency || 'RUB';
 
@@ -206,14 +231,14 @@ export const Dashboard: React.FC<DashboardProps> = ({
             <div className="flex gap-2">
               <div className="flex bg-slate-100 p-1 rounded-lg">
                 <button 
-                  onClick={() => setSortMethod('default')}
+                  onClick={() => handleSort('default')}
                   className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all ${sortMethod === 'default' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
                   title={t.sortDefault}
                 >
                   📅
                 </button>
                 <button 
-                  onClick={() => setSortMethod('amount_asc')}
+                  onClick={() => handleSort('amount_asc')}
                   className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all ${sortMethod === 'amount_asc' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
                   title={t.sortByAmount}
                 >

@@ -71,5 +71,3 @@ export const subscribeToState = (id: string, callback: (state: SavingsState) => 
     }
   });
 };
-
-

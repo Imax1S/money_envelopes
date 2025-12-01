@@ -15,6 +15,12 @@ export const translations = {
     distribution: "Distribution Mode",
     currency: "Currency",
     startChallenge: "Start Challenge",
+    haveCode: "I have a sync code",
+    enterCode: "Enter Code",
+    enterCodeDesc: "Enter your 6-character code to restore your progress.",
+    codePlaceholder: "e.g. k9x2mp",
+    restore: "Restore Progress",
+    codeError: "Invalid code or no data found.",
     
     // Modes
     modeEqual: "Equal",
@@ -99,6 +105,12 @@ export const translations = {
     distribution: "Режим распределения",
     currency: "Валюта",
     startChallenge: "Начать челлендж",
+    haveCode: "У меня есть код синхронизации",
+    enterCode: "Введите код",
+    enterCodeDesc: "Введите 6-значный код, чтобы восстановить прогресс.",
+    codePlaceholder: "например k9x2mp",
+    restore: "Восстановить",
+    codeError: "Неверный код или данные не найдены.",
 
     // Modes
     modeEqual: "Равные",

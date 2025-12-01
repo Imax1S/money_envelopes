@@ -8,6 +8,7 @@ import { saveRemoteState, loadRemoteState, generateSyncId } from './services/fir
 
 const STORAGE_KEY = 'money_envelopes_state';
 const SETTINGS_KEY = 'money_envelopes_settings';
+const SYNC_ID_KEY = 'money_envelopes_sync_id';
 
 const App: React.FC = () => {
   const [gameState, setGameState] = useState<SavingsState | null>(null);
@@ -46,16 +47,17 @@ const App: React.FC = () => {
         }
       }
 
-      // 2. Check URL for ID
+      // 2. Resolve ID
       const params = new URLSearchParams(window.location.search);
       let currentId = params.get('id');
 
       if (currentId) {
         // CASE A: ID exists -> Load from Cloud
         setSyncId(currentId);
+        localStorage.setItem(SYNC_ID_KEY, currentId); // Ensure it's saved
+
         try {
           // Race condition: Give Firebase 3 seconds to load, otherwise fail gracefully
-          // This prevents white screen if network is hanging
           const loadPromise = loadRemoteState(currentId);
           const timeoutPromise = new Promise<null>((resolve) => 
             setTimeout(() => resolve(null), 3000)
@@ -64,7 +66,6 @@ const App: React.FC = () => {
           const remoteState = await Promise.race([loadPromise, timeoutPromise]);
           
           if (remoteState) {
-             // Backwards compatibility
             if (!remoteState.unlockedAchievements) remoteState.unlockedAchievements = [];
             if (!remoteState.currency) remoteState.currency = 'RUB';
 
@@ -74,30 +75,19 @@ const App: React.FC = () => {
           console.error("Failed to load remote state", e);
         }
       } else {
-        // CASE B: No ID -> Legacy LocalStorage or New User
+        // CASE B: No ID -> Explicit New Game
         currentId = generateSyncId();
         setSyncId(currentId);
+        localStorage.setItem(SYNC_ID_KEY, currentId); 
 
-        // Update URL so user can copy it immediately
+        // Update URL
         const newUrl = `${window.location.pathname}?id=${currentId}`;
         window.history.replaceState({}, '', newUrl);
 
-        // Check if we have local data to migrate
-        const savedGame = localStorage.getItem(STORAGE_KEY);
-        if (savedGame) {
-          try {
-            const parsed = JSON.parse(savedGame);
-            if (!parsed.unlockedAchievements) parsed.unlockedAchievements = [];
-            if (!parsed.currency) parsed.currency = 'RUB';
-            
-            setGameState(parsed);
-            // Sync existing local data to the new Cloud ID
-            saveRemoteState(currentId, parsed);
-          } catch (e) {
-            console.error("Failed to parse saved state", e);
-            localStorage.removeItem(STORAGE_KEY);
-          }
-        }
+        // Strict Mode: If user enters without ID, we assume a fresh start.
+        // We wipe any existing local data to prevent accidental migration of old sessions to this new ID.
+        localStorage.removeItem(STORAGE_KEY);
+        setGameState(null);
       }
 
       setIsLoaded(true);
@@ -141,6 +131,27 @@ const App: React.FC = () => {
       unlockedAchievements: [],
     };
     setGameState(newState);
+  };
+
+  const handleSync = async (code: string): Promise<boolean> => {
+    try {
+      const remoteState = await loadRemoteState(code);
+      if (remoteState) {
+        if (!remoteState.unlockedAchievements) remoteState.unlockedAchievements = [];
+        if (!remoteState.currency) remoteState.currency = 'RUB';
+
+        setSyncId(code);
+        localStorage.setItem(SYNC_ID_KEY, code); // Persist new ID
+        setGameState(remoteState);
+        
+        const newUrl = `${window.location.pathname}?id=${code}`;
+        window.history.replaceState({}, '', newUrl);
+        return true;
+      }
+    } catch (e) {
+      console.error("Sync failed", e);
+    }
+    return false;
   };
 
   const handleOpenEnvelope = (id: number) => {
@@ -196,7 +207,7 @@ const App: React.FC = () => {
   if (!isLoaded) return null;
 
   if (!gameState || !gameState.isSetup) {
-    return <SetupScreen onStart={handleStart} lang={language} />;
+    return <SetupScreen onStart={handleStart} onSync={handleSync} lang={language} />;
   }
 
   return (

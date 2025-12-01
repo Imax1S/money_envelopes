@@ -11,7 +11,7 @@ interface EnvelopeCardProps {
 }
 
 export const EnvelopeCard: React.FC<EnvelopeCardProps> = ({ envelope, onClick, currency = 'RUB', lang }) => {
-  const { id, amount, isOpen } = envelope;
+  const { id, amount, isOpen, dayNumber } = envelope;
   const t = translations[lang];
 
   if (isOpen) {
@@ -22,7 +22,7 @@ export const EnvelopeCard: React.FC<EnvelopeCardProps> = ({ envelope, onClick, c
             <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clipRule="evenodd" />
           </svg>
         </div>
-        <span className="text-sm font-semibold text-emerald-600 mb-1">{t.day} {id}</span>
+        <span className="text-sm font-semibold text-emerald-600 mb-1">{t.day} {dayNumber}</span>
         <span className="text-xl font-bold">{formatCurrency(amount, currency)}</span>
       </div>
     );
@@ -42,7 +42,7 @@ export const EnvelopeCard: React.FC<EnvelopeCardProps> = ({ envelope, onClick, c
         </svg>
       </div>
 
-      <span className="z-10 text-sm font-medium text-slate-500 group-hover:text-indigo-600">{t.envelope} #{id}</span>
+      <span className="z-10 text-sm font-medium text-slate-500 group-hover:text-indigo-600">{t.envelope}</span>
       <span className="z-10 text-xs text-slate-400 mt-1">{t.tapToOpen}</span>
     </button>
   );

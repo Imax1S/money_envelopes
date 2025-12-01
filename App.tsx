@@ -67,6 +67,7 @@ const App: React.FC = () => {
              // Backwards compatibility
             if (!remoteState.unlockedAchievements) remoteState.unlockedAchievements = [];
             if (!remoteState.currency) remoteState.currency = 'RUB';
+
             setGameState(remoteState);
           }
         } catch (e) {
@@ -145,11 +146,22 @@ const App: React.FC = () => {
   const handleOpenEnvelope = (id: number) => {
     if (!gameState) return;
 
+    // Calculate next Day Number
+    const maxDay = gameState.envelopes.reduce((max, env) => {
+        return Math.max(max, env.dayNumber || 0);
+    }, 0);
+    const nextDay = maxDay + 1;
+
     let openedEnvelope = null;
 
     const updatedEnvelopes = gameState.envelopes.map(env => {
       if (env.id === id && !env.isOpen) {
-        openedEnvelope = { ...env, isOpen: true, openedAt: new Date().toISOString() };
+        openedEnvelope = { 
+            ...env, 
+            isOpen: true, 
+            openedAt: new Date().toISOString(),
+            dayNumber: nextDay
+        };
         return openedEnvelope;
       }
       return env;

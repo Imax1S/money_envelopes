@@ -36,7 +36,7 @@ export const translations = {
     filterOpened: "Opened",
     emptyCategory: "No envelopes in this category.",
     sortByAmount: "Sort by Amount",
-    sortDefault: "Default Order",
+    sortDefault: "Sort by Day",
 
     // Envelopes
     day: "Day",
@@ -110,7 +110,7 @@ export const translations = {
     filterOpened: "Открытые",
     emptyCategory: "В этой категории пока нет конвертов.",
     sortByAmount: "По сумме",
-    sortDefault: "По порядку",
+    sortDefault: "По дню",
 
     // Envelopes
     day: "День",

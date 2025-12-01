@@ -5,6 +5,7 @@ export interface Envelope {
   amount: number;
   isOpen: boolean;
   openedAt?: string; // ISO date string
+  dayNumber?: number; // Assigned when opened
 }
 
 export interface Achievement {

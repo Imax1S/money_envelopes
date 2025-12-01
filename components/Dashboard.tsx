@@ -45,9 +45,19 @@ export const Dashboard: React.FC<DashboardProps> = ({
     // Clone to sort safely
     displayEnvelopes = [...displayEnvelopes].sort((a, b) => a.amount - b.amount);
   } else {
-    // Default is usually ID order (1..N) based on Day, but let's ensure it's ID sorted for "Default"
-    // Note: The envelope ID corresponds to Day #.
-    displayEnvelopes = [...displayEnvelopes].sort((a, b) => a.id - b.id);
+    // Sort by Day Number (Opened first), then by ID for closed ones
+    displayEnvelopes = [...displayEnvelopes].sort((a, b) => {
+        // If both opened, sort by dayNumber
+        if (a.isOpen && b.isOpen) {
+            return (a.dayNumber || 0) - (b.dayNumber || 0);
+        }
+        // Opened comes first
+        if (a.isOpen && !b.isOpen) return -1;
+        if (!a.isOpen && b.isOpen) return 1;
+
+        // If both closed, sort by ID to keep stable order
+        return a.id - b.id;
+    });
   }
 
   const currency = state.currency || 'RUB';
@@ -193,9 +203,9 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 <button 
                   onClick={() => setSortMethod('default')}
                   className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all ${sortMethod === 'default' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
-                  title="Default Day Order"
+                  title={t.sortDefault}
                 >
-                  #
+                  📅
                 </button>
                 <button 
                   onClick={() => setSortMethod('amount_asc')}

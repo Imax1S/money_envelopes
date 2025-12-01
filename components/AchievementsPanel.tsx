@@ -6,10 +6,12 @@ import { translations } from '../services/translations';
 interface AchievementsPanelProps {
   unlockedIds: string[];
   lang: Language;
+  targetAmount: number;
+  currency: string;
 }
 
-export const AchievementsPanel: React.FC<AchievementsPanelProps> = ({ unlockedIds, lang }) => {
-  const achievementsList = getAchievementsList(lang);
+export const AchievementsPanel: React.FC<AchievementsPanelProps> = ({ unlockedIds, lang, targetAmount, currency }) => {
+  const achievementsList = getAchievementsList(lang, targetAmount, currency);
   const t = translations[lang];
 
   return (

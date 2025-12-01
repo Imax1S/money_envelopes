@@ -60,20 +60,30 @@ export const translations = {
     // Achievement Titles/Descs
     ach_first_step_title: "First Step",
     ach_first_step_desc: "Open your first envelope",
-    ach_saved_1000_title: "Piggy Bank",
-    ach_saved_1000_desc: "First 1,000 accumulated",
-    ach_saved_5000_title: "Banker",
-    ach_saved_5000_desc: "5,000 accumulated",
-    ach_saved_10000_title: "Tycoon",
-    ach_saved_10000_desc: "10,000 accumulated",
-    ach_streak_3_title: "Warm Up",
-    ach_streak_3_desc: "3 day streak",
-    ach_streak_7_title: "Discipline Week",
-    ach_streak_7_desc: "7 day streak without skipping",
-    ach_half_way_title: "Half Way",
-    ach_half_way_desc: "50% of goal reached",
-    ach_goal_reached_title: "Dream Come True",
-    ach_goal_reached_desc: "Goal fully achieved!",
+    
+    ach_saved_10_percent_title: "Seed Capital",
+    ach_saved_10_percent_desc: (amount: string) => `First ${amount} saved! You're on your way.`,
+    
+    ach_saved_25_percent_title: "Momentum Builder",
+    ach_saved_25_percent_desc: (amount: string) => `25% down! That's ${amount} in the bank.`,
+    
+    ach_saved_50_percent_title: "Halfway Hero",
+    ach_saved_50_percent_desc: (amount: string) => `Whoa, 50% reached! ${amount} secured.`,
+    
+    ach_saved_75_percent_title: "Final Stretch",
+    ach_saved_75_percent_desc: (amount: string) => `75% done! You have ${amount} now.`,
+    
+    ach_streak_3_title: "Heating Up",
+    ach_streak_3_desc: "3 day streak. Keep the fire burning!",
+    
+    ach_streak_7_title: "Unstoppable",
+    ach_streak_7_desc: "7 days in a row! That's a full week.",
+    
+    ach_streak_21_title: "Habit Master",
+    ach_streak_21_desc: "21 days! A new habit is formed.",
+    
+    ach_goal_reached_title: "Goal Crusher",
+    ach_goal_reached_desc: (amount: string) => `You did it! ${amount} is all yours.`,
   },
   ru: {
     // Setup
@@ -134,19 +144,29 @@ export const translations = {
     // Achievement Titles/Descs
     ach_first_step_title: "Первый шаг",
     ach_first_step_desc: "Откройте свой первый конверт",
-    ach_saved_1000_title: "Копилка",
-    ach_saved_1000_desc: "Накоплена первая 1 000",
-    ach_saved_5000_title: "Банкир",
-    ach_saved_5000_desc: "Накоплено 5 000",
-    ach_saved_10000_title: "Магнат",
-    ach_saved_10000_desc: "Накоплено 10 000",
-    ach_streak_3_title: "Разминка",
-    ach_streak_3_desc: "3 дня подряд вы открываете конверты",
-    ach_streak_7_title: "Неделя дисциплины",
-    ach_streak_7_desc: "7 дней подряд без пропусков",
-    ach_half_way_title: "Экватор",
-    ach_half_way_desc: "Половина суммы собрана",
-    ach_goal_reached_title: "Мечта сбылась",
-    ach_goal_reached_desc: "Цель полностью достигнута!",
+    
+    ach_saved_10_percent_title: "Начало положено",
+    ach_saved_10_percent_desc: (amount: string) => `Первые ${amount} накоплены! Так держать.`,
+    
+    ach_saved_25_percent_title: "Набираем обороты",
+    ach_saved_25_percent_desc: (amount: string) => `25% пути позади! У вас уже ${amount}.`,
+    
+    ach_saved_50_percent_title: "Экватор",
+    ach_saved_50_percent_desc: (amount: string) => `Половина цели! ${amount} уже в кармане.`,
+    
+    ach_saved_75_percent_title: "Финишная прямая",
+    ach_saved_75_percent_desc: (amount: string) => `75% готово! Вы накопили ${amount}.`,
+    
+    ach_streak_3_title: "Разогрев",
+    ach_streak_3_desc: "3 дня подряд. Отличное начало!",
+    
+    ach_streak_7_title: "На волне",
+    ach_streak_7_desc: "7 дней подряд! Неделя дисциплины.",
+    
+    ach_streak_21_title: "Мастер привычки",
+    ach_streak_21_desc: "21 день подряд! Привычка сформирована.",
+    
+    ach_goal_reached_title: "Победа!",
+    ach_goal_reached_desc: (amount: string) => `Вы сделали это! ${amount} ваши.`,
   }
 };

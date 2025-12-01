@@ -191,7 +191,12 @@ export const Dashboard: React.FC<DashboardProps> = ({
         </div>
 
         {/* Achievements Section */}
-        <AchievementsPanel unlockedIds={state.unlockedAchievements || []} lang={lang} />
+        <AchievementsPanel 
+          unlockedIds={state.unlockedAchievements || []} 
+          lang={lang} 
+          targetAmount={state.targetAmount}
+          currency={currency}
+        />
 
         {/* Filters & Grid */}
         <div>

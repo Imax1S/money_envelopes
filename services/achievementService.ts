@@ -1,69 +1,92 @@
 import { Envelope, SavingsState, Achievement, Language } from '../types';
 import { translations } from './translations';
+import { formatCurrency } from './utils';
 
-export const getAchievementsList = (lang: Language): Achievement[] => {
+export const getAchievementsList = (
+  lang: Language,
+  targetAmount: number,
+  currency: string
+): Achievement[] => {
   const t = translations[lang];
+  
+  // Helper to safely get description (string or function)
+  const getDesc = (key: keyof typeof t, amount: number) => {
+    const val = t[key];
+    if (typeof val === 'function') {
+      return val(formatCurrency(amount, currency));
+    }
+    return val as string;
+  };
+
   return [
     {
       id: 'first_step',
-      title: t.ach_first_step_title,
-      description: t.ach_first_step_desc,
+      title: t.ach_first_step_title as string,
+      description: t.ach_first_step_desc as string,
       icon: '🚀',
       conditionType: 'completion',
       threshold: 0
     },
     {
-      id: 'saved_1000',
-      title: t.ach_saved_1000_title,
-      description: t.ach_saved_1000_desc,
-      icon: '🐷',
+      id: 'saved_10_percent',
+      title: t.ach_saved_10_percent_title as string,
+      description: getDesc('ach_saved_10_percent_desc', targetAmount * 0.1),
+      icon: '🌱',
       conditionType: 'amount',
-      threshold: 1000
+      threshold: targetAmount * 0.1
     },
     {
-      id: 'saved_5000',
-      title: t.ach_saved_5000_title,
-      description: t.ach_saved_5000_desc,
-      icon: '💼',
+      id: 'saved_25_percent',
+      title: t.ach_saved_25_percent_title as string,
+      description: getDesc('ach_saved_25_percent_desc', targetAmount * 0.25),
+      icon: '🏃',
       conditionType: 'amount',
-      threshold: 5000
+      threshold: targetAmount * 0.25
     },
     {
-      id: 'saved_10000',
-      title: t.ach_saved_10000_title,
-      description: t.ach_saved_10000_desc,
-      icon: '💎',
+      id: 'saved_50_percent',
+      title: t.ach_saved_50_percent_title as string,
+      description: getDesc('ach_saved_50_percent_desc', targetAmount * 0.5),
+      icon: '⛰️',
+      conditionType: 'completion', // Keeping completion but logic is effectively amount/percent
+      threshold: 50 // Percent
+    },
+    {
+      id: 'saved_75_percent',
+      title: t.ach_saved_75_percent_title as string,
+      description: getDesc('ach_saved_75_percent_desc', targetAmount * 0.75),
+      icon: '🔥',
       conditionType: 'amount',
-      threshold: 10000
+      threshold: targetAmount * 0.75
     },
     {
       id: 'streak_3',
-      title: t.ach_streak_3_title,
-      description: t.ach_streak_3_desc,
-      icon: '🔥',
+      title: t.ach_streak_3_title as string,
+      description: t.ach_streak_3_desc as string,
+      icon: '⚡',
       conditionType: 'streak',
       threshold: 3
     },
     {
       id: 'streak_7',
-      title: t.ach_streak_7_title,
-      description: t.ach_streak_7_desc,
+      title: t.ach_streak_7_title as string,
+      description: t.ach_streak_7_desc as string,
       icon: '📅',
       conditionType: 'streak',
       threshold: 7
     },
     {
-      id: 'half_way',
-      title: t.ach_half_way_title,
-      description: t.ach_half_way_desc,
-      icon: '⚖️',
-      conditionType: 'completion',
-      threshold: 50 // Special logic for 50%
+      id: 'streak_21',
+      title: t.ach_streak_21_title as string,
+      description: t.ach_streak_21_desc as string,
+      icon: '🧘',
+      conditionType: 'streak',
+      threshold: 21
     },
     {
       id: 'goal_reached',
-      title: t.ach_goal_reached_title,
-      description: t.ach_goal_reached_desc,
+      title: t.ach_goal_reached_title as string,
+      description: getDesc('ach_goal_reached_desc', targetAmount),
       icon: '🏆',
       conditionType: 'completion',
       threshold: 100
@@ -75,9 +98,8 @@ export const checkNewAchievements = (
   state: SavingsState,
   newEnvelope: Envelope
 ): string[] => {
-  // We use English ID keys for logic, so we can just grab the structure from 'en' or any lang
-  // The IDs are constant across languages
-  const referenceList = getAchievementsList('en'); 
+  // We pass the target amount and currency from state
+  const referenceList = getAchievementsList('en', state.targetAmount, state.currency);
   
   const newUnlocked: string[] = [];
   const currentUnlocked = new Set(state.unlockedAchievements || []);
@@ -97,9 +119,15 @@ export const checkNewAchievements = (
   if (!currentUnlocked.has('first_step') && openedEnvelopes.length > 0) {
     newUnlocked.push('first_step');
   }
-  if (!currentUnlocked.has('half_way') && percent >= 50) {
-    newUnlocked.push('half_way');
+  
+  // 50% check (reused as saved_50_percent but condition is completion/percent based in old logic? 
+  // Wait, in getAchievementsList I set conditionType='completion' and threshold=50 for saved_50_percent
+  // Let's treat it consistently.
+  
+  if (!currentUnlocked.has('saved_50_percent') && percent >= 50) {
+    newUnlocked.push('saved_50_percent');
   }
+  
   if (!currentUnlocked.has('goal_reached') && percent >= 100) {
     newUnlocked.push('goal_reached');
   }
